@@ -1,12 +1,25 @@
 package main
 
 import (
-	"fmt"
+	"log"
+	"net/http"
 
+	"github.com/sujalshah-bit/span-explainer/internal/llm"
+	"github.com/sujalshah-bit/span-explainer/internal/server"
 	"github.com/sujalshah-bit/span-explainer/internal/store"
 )
 
 func main() {
-	_ = store.NewStore()
-	fmt.Print("Hello world")
+	store := store.NewStore()
+	llm := &llm.FakeLLM{}
+	httpServer := &server.Server{
+		Store: store,
+		Llm:   llm,
+	}
+	mux := &http.ServeMux{}
+
+	server.RegisterRoutes(mux, httpServer, store)
+
+	log.Println("🚀 server running on :8080")
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }
