@@ -11,7 +11,7 @@ import (
 
 func main() {
 	store := store.NewStore()
-	llm := &llm.FakeLLM{}
+	llm := &llm.PhiLLM{}
 	httpServer := &server.Server{
 		Store: store,
 		Llm:   llm,

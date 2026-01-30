@@ -14,10 +14,10 @@ type LLM interface {
 	ExplainTrace(ctx context.Context, traceData json.RawMessage, question, spanID string) (*ExplainResult, error)
 }
 
-type FakeLLM struct{}
+type PhiLLM struct{}
 
 // ExplainTrace builds a comprehensive context from trace data and prepares it for LLM analysis
-func (f *FakeLLM) ExplainTrace(ctx context.Context, traceData json.RawMessage, question, spanID string) (*ExplainResult, error) {
+func (f *PhiLLM) ExplainTrace(ctx context.Context, traceData json.RawMessage, question, spanID string) (*ExplainResult, error) {
 	explainCtx, err := trace.BuildExplainContext(traceData, spanID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build explain context: %w", err)
