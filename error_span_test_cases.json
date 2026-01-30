@@ -1,0 +1,533 @@
+{
+  "test_cases": [
+    {
+      "name": "Database Connection Timeout",
+      "trace": {
+        "resourceSpans": [
+          {
+            "resource": {
+              "attributes": [
+                {
+                  "key": "service.name",
+                  "value": {"stringValue": "user-service"}
+                }
+              ]
+            },
+            "scopeSpans": [
+              {
+                "spans": [
+                  {
+                    "traceId": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+                    "spanId": "span001",
+                    "name": "GET /api/users",
+                    "startTimeUnixNano": "1706608800000000000",
+                    "endTimeUnixNano": "1706608835500000000",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "http.method": "GET",
+                      "http.route": "/api/users",
+                      "http.status_code": "500"
+                    }
+                  },
+                  {
+                    "traceId": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+                    "spanId": "span002",
+                    "parentSpanId": "span001",
+                    "name": "db.query",
+                    "startTimeUnixNano": "1706608800100000000",
+                    "endTimeUnixNano": "1706608835100000000",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "db.system": "postgresql",
+                      "db.statement": "SELECT * FROM users WHERE active = true",
+                      "error.type": "TimeoutError"
+                    },
+                    "events": [{"name": "Connection timeout after 35000ms"}]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "span_id": "span002",
+      "expected_answer": {
+        "root_cause": "Database connection timeout - query exceeded 30 second limit",
+        "impact": "Complete failure of GET /api/users endpoint affecting all user list requests",
+        "suggested_action": "Review database query performance, add appropriate indexes, consider connection pooling, or adjust timeout configuration"
+      }
+    },
+    {
+      "name": "Null Pointer Exception in Service Layer",
+      "trace": {
+        "resourceSpans": [
+          {
+            "resource": {
+              "attributes": [
+                {
+                  "key": "service.name",
+                  "value": {"stringValue": "order-service"}
+                }
+              ]
+            },
+            "scopeSpans": [
+              {
+                "spans": [
+                  {
+                    "traceId": "b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7",
+                    "spanId": "span101",
+                    "name": "POST /api/orders",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "http.method": "POST",
+                      "http.status_code": "500"
+                    }
+                  },
+                  {
+                    "traceId": "b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7",
+                    "spanId": "span102",
+                    "parentSpanId": "span101",
+                    "name": "OrderService.createOrder",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "error.type": "NullPointerException"
+                    },
+                    "events": [
+                      {"name": "NullPointerException: Cannot invoke getAddress() on null customer object"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "span_id": "span102",
+      "expected_answer": {
+        "root_cause": "NullPointerException when accessing customer.getAddress() - customer object was null",
+        "impact": "Order creation endpoint completely broken, blocking all new order submissions",
+        "suggested_action": "Add null validation for customer object, implement proper error handling, and validate input data before processing"
+      }
+    },
+    {
+      "name": "Third-Party API Rate Limit Exceeded",
+      "trace": {
+        "resourceSpans": [
+          {
+            "resource": {
+              "attributes": [
+                {
+                  "key": "service.name",
+                  "value": {"stringValue": "weather-service"}
+                }
+              ]
+            },
+            "scopeSpans": [
+              {
+                "spans": [
+                  {
+                    "traceId": "c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8",
+                    "spanId": "span201",
+                    "name": "GET /api/weather",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "http.method": "GET",
+                      "http.status_code": "503"
+                    }
+                  },
+                  {
+                    "traceId": "c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8",
+                    "spanId": "span202",
+                    "parentSpanId": "span201",
+                    "name": "HTTP GET weatherapi.com",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "http.url": "https://weatherapi.com/v1/current",
+                      "http.status_code": "429",
+                      "error.type": "RateLimitError"
+                    },
+                    "events": [
+                      {"name": "Rate limit exceeded - retry after 3600 seconds"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "span_id": "span202",
+      "expected_answer": {
+        "root_cause": "Third-party weather API rate limit exceeded (HTTP 429)",
+        "impact": "Weather service unavailable for next 3600 seconds (1 hour), all weather requests failing",
+        "suggested_action": "Implement response caching, add rate limiting on client side, consider upgrading API tier, or implement fallback weather provider"
+      }
+    },
+    {
+      "name": "Memory Leak in Background Task",
+      "trace": {
+        "resourceSpans": [
+          {
+            "resource": {
+              "attributes": [
+                {
+                  "key": "service.name",
+                  "value": {"stringValue": "image-processor"}
+                }
+              ]
+            },
+            "scopeSpans": [
+              {
+                "spans": [
+                  {
+                    "traceId": "d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9",
+                    "spanId": "span301",
+                    "name": "BackgroundJob.processImages",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "job.type": "image_processing",
+                      "job.batch_size": "1000",
+                      "memory.heap.used": "4096MB",
+                      "error.type": "OutOfMemoryError"
+                    },
+                    "events": [
+                      {"name": "OutOfMemoryError: Java heap space"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "span_id": "span301",
+      "expected_answer": {
+        "root_cause": "OutOfMemoryError - heap memory maxed out at 4096MB during batch image processing",
+        "impact": "Background job failure causing image processing backlog and service degradation",
+        "suggested_action": "Reduce batch size, implement streaming processing, increase heap size, or add memory cleanup between iterations"
+      }
+    },
+    {
+      "name": "Authentication Token Expired",
+      "trace": {
+        "resourceSpans": [
+          {
+            "resource": {
+              "attributes": [
+                {
+                  "key": "service.name",
+                  "value": {"stringValue": "auth-service"}
+                }
+              ]
+            },
+            "scopeSpans": [
+              {
+                "spans": [
+                  {
+                    "traceId": "e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0",
+                    "spanId": "span401",
+                    "name": "GET /api/profile",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "http.method": "GET",
+                      "http.status_code": "401"
+                    }
+                  },
+                  {
+                    "traceId": "e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0",
+                    "spanId": "span402",
+                    "parentSpanId": "span401",
+                    "name": "AuthMiddleware.validate",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "auth.token.ttl": "3600",
+                      "error.type": "TokenExpiredError"
+                    },
+                    "events": [
+                      {"name": "JWT token expired at 2024-01-30T10:00:00Z"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "span_id": "span402",
+      "expected_answer": {
+        "root_cause": "JWT token expired - exceeded 1 hour TTL",
+        "impact": "User authentication failed, blocking access to protected profile endpoint",
+        "suggested_action": "Implement automatic token refresh using refresh tokens, or redirect user to login page"
+      }
+    },
+    {
+      "name": "Deadlock in Concurrent Transactions",
+      "trace": {
+        "resourceSpans": [
+          {
+            "resource": {
+              "attributes": [
+                {
+                  "key": "service.name",
+                  "value": {"stringValue": "payment-service"}
+                }
+              ]
+            },
+            "scopeSpans": [
+              {
+                "spans": [
+                  {
+                    "traceId": "f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1",
+                    "spanId": "span501",
+                    "name": "POST /api/transfer",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "http.method": "POST",
+                      "http.status_code": "500"
+                    }
+                  },
+                  {
+                    "traceId": "f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1",
+                    "spanId": "span502",
+                    "parentSpanId": "span501",
+                    "name": "db.transaction",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "db.system": "mysql",
+                      "db.operation": "UPDATE accounts",
+                      "error.type": "DeadlockError"
+                    },
+                    "events": [
+                      {"name": "Deadlock detected: transaction rolled back"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "span_id": "span502",
+      "expected_answer": {
+        "root_cause": "Database deadlock between 2 concurrent transactions attempting to update same account records",
+        "impact": "Transfer transaction failed and rolled back, funds not transferred, user sees error",
+        "suggested_action": "Implement transaction retry mechanism with exponential backoff, use consistent lock ordering, or switch to optimistic concurrency control"
+      }
+    },
+    {
+      "name": "File System Permission Denied",
+      "trace": {
+        "resourceSpans": [
+          {
+            "resource": {
+              "attributes": [
+                {
+                  "key": "service.name",
+                  "value": {"stringValue": "file-upload-service"}
+                }
+              ]
+            },
+            "scopeSpans": [
+              {
+                "spans": [
+                  {
+                    "traceId": "g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2",
+                    "spanId": "span601",
+                    "name": "POST /api/upload",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "http.method": "POST",
+                      "http.status_code": "500"
+                    }
+                  },
+                  {
+                    "traceId": "g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2",
+                    "spanId": "span602",
+                    "parentSpanId": "span601",
+                    "name": "FileStorage.save",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "file.path": "/var/uploads/file.pdf",
+                      "file.size": "2048576",
+                      "error.type": "PermissionError"
+                    },
+                    "events": [
+                      {"name": "EACCES: permission denied, open '/var/uploads/file.pdf'"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "span_id": "span602",
+      "expected_answer": {
+        "root_cause": "Permission denied error - application process lacks write access to /var/uploads directory",
+        "impact": "All file uploads failing, users cannot save documents to system",
+        "suggested_action": "Update directory permissions (chmod) or change directory owner (chown) to grant write access to application user"
+      }
+    },
+    {
+      "name": "Circuit Breaker Open State",
+      "trace": {
+        "resourceSpans": [
+          {
+            "resource": {
+              "attributes": [
+                {
+                  "key": "service.name",
+                  "value": {"stringValue": "recommendation-service"}
+                }
+              ]
+            },
+            "scopeSpans": [
+              {
+                "spans": [
+                  {
+                    "traceId": "h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3",
+                    "spanId": "span701",
+                    "name": "GET /api/recommendations",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "http.method": "GET",
+                      "http.status_code": "503"
+                    }
+                  },
+                  {
+                    "traceId": "h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3",
+                    "spanId": "span702",
+                    "parentSpanId": "span701",
+                    "name": "RecommendationService.get",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "circuit_breaker.state": "OPEN",
+                      "circuit_breaker.failure_count": "15",
+                      "circuit_breaker.threshold": "10",
+                      "error.type": "CircuitBreakerOpenError"
+                    },
+                    "events": [
+                      {"name": "Circuit breaker is OPEN - blocking requests"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "span_id": "span702",
+      "expected_answer": {
+        "root_cause": "Circuit breaker in OPEN state due to 15 failures exceeding threshold of 10",
+        "impact": "All recommendation requests fast-failing without attempting call, feature unavailable for 60 seconds",
+        "suggested_action": "Investigate and fix upstream recommendation service failures, monitor circuit breaker metrics, consider implementing fallback response"
+      }
+    },
+    {
+      "name": "JSON Parsing Error Invalid Format",
+      "trace": {
+        "resourceSpans": [
+          {
+            "resource": {
+              "attributes": [
+                {
+                  "key": "service.name",
+                  "value": {"stringValue": "event-service"}
+                }
+              ]
+            },
+            "scopeSpans": [
+              {
+                "spans": [
+                  {
+                    "traceId": "i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4",
+                    "spanId": "span801",
+                    "name": "POST /api/events",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "http.method": "POST",
+                      "http.status_code": "400"
+                    }
+                  },
+                  {
+                    "traceId": "i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4",
+                    "spanId": "span802",
+                    "parentSpanId": "span801",
+                    "name": "JSON.parse",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "error.type": "SyntaxError",
+                      "content.type": "application/json"
+                    },
+                    "events": [
+                      {"name": "Unexpected token } in JSON at position 45"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "span_id": "span802",
+      "expected_answer": {
+        "root_cause": "Invalid JSON syntax - unexpected token '}' at position 45 in request body",
+        "impact": "Event cannot be created, request rejected immediately with 400 error",
+        "suggested_action": "Add client-side JSON validation, improve error messages to help client identify malformed data, consider JSON schema validation"
+      }
+    },
+    {
+      "name": "SSL Certificate Verification Failed",
+      "trace": {
+        "resourceSpans": [
+          {
+            "resource": {
+              "attributes": [
+                {
+                  "key": "service.name",
+                  "value": {"stringValue": "integration-service"}
+                }
+              ]
+            },
+            "scopeSpans": [
+              {
+                "spans": [
+                  {
+                    "traceId": "j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5",
+                    "spanId": "span901",
+                    "name": "GET /api/external-data",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "http.method": "GET",
+                      "http.status_code": "502"
+                    }
+                  },
+                  {
+                    "traceId": "j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5",
+                    "spanId": "span902",
+                    "parentSpanId": "span901",
+                    "name": "HTTPS GET partner-api.example.com",
+                    "status": {"code": "error"},
+                    "attributes": {
+                      "http.url": "https://partner-api.example.com/data",
+                      "error.type": "SSLCertificateError"
+                    },
+                    "events": [
+                      {"name": "SSL certificate verification failed: certificate has expired"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "span_id": "span902",
+      "expected_answer": {
+        "root_cause": "SSL certificate expired - partner API certificate expired on 2024-01-15, 15 days ago",
+        "impact": "All requests to partner API failing, external data integration completely broken",
+        "suggested_action": "Contact partner-api.example.com administrator to renew certificate, implement certificate expiry monitoring, consider temporary fallback data source"
+      }
+    }
+  ]
+}

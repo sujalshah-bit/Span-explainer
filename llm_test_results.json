@@ -1,0 +1,180 @@
+{
+  "metadata": {
+    "timestamp": "2026-01-30T19:36:21.860922",
+    "user_id": "2ee3da5f-63b0-4dd1-a85e-4c7b1333f180",
+    "total_tests": 10,
+    "base_url": "http://localhost:9000"
+  },
+  "results": [
+    {
+      "test_name": "Database Connection Timeout",
+      "span_id": "span002",
+      "expected_answer": {
+        "root_cause": "Database connection timeout - query exceeded 30 second limit",
+        "impact": "Complete failure of GET /api/users endpoint affecting all user list requests",
+        "suggested_action": "Review database query performance, add appropriate indexes, consider connection pooling, or adjust timeout configuration"
+      },
+      "status": "success",
+      "upload_id": "4b31eeee-c41a-4c5b-acba-04d88af1f004",
+      "llm_answer": {
+        "root_cause": "TimeoutError due to inefficient query on the 'users' table",
+        "impact": "All active users are unable to retrieve their information, affecting user experience and potentially business operations relying on real-time data access",
+        "suggested_action": "Optimize SELECT queries by adding appropriate indexes or restructuring query conditions; consider implementing connection pooling for better resource management"
+      },
+      "response_time_seconds": 15.79
+    },
+    {
+      "test_name": "Null Pointer Exception in Service Layer",
+      "span_id": "span102",
+      "expected_answer": {
+        "root_cause": "NullPointerException when accessing customer.getAddress() - customer object was null",
+        "impact": "Order creation endpoint completely broken, blocking all new order submissions",
+        "suggested_action": "Add null validation for customer object, implement proper error handling, and validate input data before processing"
+      },
+      "status": "success",
+      "upload_id": "c2dde729-22f2-4710-9a4b-6b2860d9f048",
+      "llm_answer": {
+        "root_cause": "NullPointerException due to invoking getAddress() on a null customer object",
+        "impact": "All users attempting to create an order via POST /api/orders are affected, resulting in HTTP status code 500 errors.",
+        "suggested_action": "Implement input validation and error handling within the OrderService.createOrder method to check for null customer objects before invoking methods on them."
+      },
+      "response_time_seconds": 8.95
+    },
+    {
+      "test_name": "Third-Party API Rate Limit Exceeded",
+      "span_id": "span202",
+      "expected_answer": {
+        "root_cause": "Third-party weather API rate limit exceeded (HTTP 429)",
+        "impact": "Weather service unavailable for next 3600 seconds (1 hour), all weather requests failing",
+        "suggested_action": "Implement response caching, add rate limiting on client side, consider upgrading API tier, or implement fallback weather provider"
+      },
+      "status": "success",
+      "upload_id": "f9cec5b8-f361-4aa1-8401-6a345ae4114d",
+      "llm_answer": {
+        "root_cause": "RateLimitError due to exceeding API request limits",
+        "impact": "Weather service users are unable to retrieve current weather data, affecting user experience and reliability of the application.",
+        "suggested_action": "Implement exponential backoff in retry logic for rate-limited requests. Review and optimize existing queries or consider request quotas if applicable."
+      },
+      "response_time_seconds": 8.67
+    },
+    {
+      "test_name": "Memory Leak in Background Task",
+      "span_id": "span301",
+      "expected_answer": {
+        "root_cause": "OutOfMemoryError - heap memory maxed out at 4096MB during batch image processing",
+        "impact": "Background job failure causing image processing backlog and service degradation",
+        "suggested_action": "Reduce batch size, implement streaming processing, increase heap size, or add memory cleanup between iterations"
+      },
+      "status": "success",
+      "upload_id": "9b1d9151-2b8b-45a6-bdf4-56fddcb5856e",
+      "llm_answer": {
+        "root_cause": "OutOfMemoryError due to excessive memory usage by the image processing job",
+        "impact": "The entire service is halted, affecting all users waiting for processed images and potentially causing a backlog of requests.",
+        "suggested_action": "Increase heap size allocation or optimize batch sizes; consider implementing garbage collection tuning."
+      },
+      "response_time_seconds": 13.57
+    },
+    {
+      "test_name": "Authentication Token Expired",
+      "span_id": "span402",
+      "expected_answer": {
+        "root_cause": "JWT token expired - exceeded 1 hour TTL",
+        "impact": "User authentication failed, blocking access to protected profile endpoint",
+        "suggested_action": "Implement automatic token refresh using refresh tokens, or redirect user to login page"
+      },
+      "status": "success",
+      "upload_id": "0884b000-683f-4b77-a041-a214edef5817",
+      "llm_answer": {
+        "root_cause": "TokenExpiredError due to JWT token expiration",
+        "impact": "Users attempting to access their profile are denied with a '401 Unauthorized' status code, affecting user experience and potentially business operations reliant on authenticated profiles.",
+        "suggested_action": "Implement automatic refresh of tokens before they expire or extend the token TTL based on security assessment"
+      },
+      "response_time_seconds": 9.09
+    },
+    {
+      "test_name": "Deadlock in Concurrent Transactions",
+      "span_id": "span502",
+      "expected_answer": {
+        "root_cause": "Database deadlock between 2 concurrent transactions attempting to update same account records",
+        "impact": "Transfer transaction failed and rolled back, funds not transferred, user sees error",
+        "suggested_action": "Implement transaction retry mechanism with exponential backoff, use consistent lock ordering, or switch to optimistic concurrency control"
+      },
+      "status": "success",
+      "upload_id": "9897f88d-5fc1-489b-acd5-9407c9558c93",
+      "llm_answer": {
+        "root_cause": "DeadlockError during UPDATE accounts in MySQL",
+        "impact": "Payment processing service users encountering transaction failures, leading to incomplete transfers and potential revenue loss.",
+        "suggested_action": "Implement optimistic concurrency control or review isolation levels for database transactions."
+      },
+      "response_time_seconds": 8.01
+    },
+    {
+      "test_name": "File System Permission Denied",
+      "span_id": "span602",
+      "expected_answer": {
+        "root_cause": "Permission denied error - application process lacks write access to /var/uploads directory",
+        "impact": "All file uploads failing, users cannot save documents to system",
+        "suggested_action": "Update directory permissions (chmod) or change directory owner (chown) to grant write access to application user"
+      },
+      "status": "success",
+      "upload_id": "44662ff9-067a-4b0f-a9f3-1d0ec9936a72",
+      "llm_answer": {
+        "root_cause": "Permission denied error due to insufficient file system permissions for the '/var/uploads' directory",
+        "impact": "All users attempting to upload files via POST /api/upload are affected, resulting in a service failure with HTTP status code 500 and an EACCES log event indicating permission issues on the target span level.",
+        "suggested_action": "Review and adjust file system permissions for '/var/uploads' to ensure that the 'file-upload-service' process has write access. Implement proper error handling in service code to catch such exceptions, logging them appropriately without exposing stack traces or sensitive information."
+      },
+      "response_time_seconds": 12.23
+    },
+    {
+      "test_name": "Circuit Breaker Open State",
+      "span_id": "span702",
+      "expected_answer": {
+        "root_cause": "Circuit breaker in OPEN state due to 15 failures exceeding threshold of 10",
+        "impact": "All recommendation requests fast-failing without attempting call, feature unavailable for 60 seconds",
+        "suggested_action": "Investigate and fix upstream recommendation service failures, monitor circuit breaker metrics, consider implementing fallback response"
+      },
+      "status": "success",
+      "upload_id": "869bbb68-a462-4c8d-a510-9cdc7eab9db6",
+      "llm_answer": {
+        "root_cause": "Circuit breaker triggered due to high error rate",
+        "impact": "RecommendationService is unavailable, affecting all users requesting recommendations and downstream services relying on it.",
+        "suggested_action": "Investigate the cause of errors leading to circuit failure. Implement robust exception handling within RecommendationService. Consider increasing threshold or adding backoff strategies."
+      },
+      "response_time_seconds": 9.29
+    },
+    {
+      "test_name": "JSON Parsing Error Invalid Format",
+      "span_id": "span802",
+      "expected_answer": {
+        "root_cause": "Invalid JSON syntax - unexpected token '}' at position 45 in request body",
+        "impact": "Event cannot be created, request rejected immediately with 400 error",
+        "suggested_action": "Add client-side JSON validation, improve error messages to help client identify malformed data, consider JSON schema validation"
+      },
+      "status": "success",
+      "upload_id": "511b4228-960f-422f-82c7-ee0801f7e753",
+      "llm_answer": {
+        "root_cause": "SyntaxError due to invalid JSON format in the target span",
+        "impact": "All users attempting POST /api/events are experiencing errors, potentially halting event processing and reporting.",
+        "suggested_action": "Validate incoming data for correct JSON formatting before parsing. Implement input sanitization checks to prevent malformed JSON from being processed."
+      },
+      "response_time_seconds": 8.46
+    },
+    {
+      "test_name": "SSL Certificate Verification Failed",
+      "span_id": "span902",
+      "expected_answer": {
+        "root_cause": "SSL certificate expired - partner API certificate expired on 2024-01-15, 15 days ago",
+        "impact": "All requests to partner API failing, external data integration completely broken",
+        "suggested_action": "Contact partner-api.example.com administrator to renew certificate, implement certificate expiry monitoring, consider temporary fallback data source"
+      },
+      "status": "success",
+      "upload_id": "3fd456fe-4798-409f-bb93-29f53097dc6b",
+      "llm_answer": {
+        "root_cause": "Expired SSL certificate",
+        "impact": "Integration service users unable to access partner API, resulting in a failed HTTPS GET operation and potential data retrieval issues.",
+        "suggested_action": "Update the expired SSL certificate for integration-service' endpoints. Ensure proper validation of certificates before making outbound requests."
+      },
+      "response_time_seconds": 8.48
+    }
+  ]
+}
