@@ -2,24 +2,44 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/sujalshah-bit/span-explainer/internal/llm"
+	otelvalidator "github.com/sujalshah-bit/span-explainer/internal/otel_validator"
 	"github.com/sujalshah-bit/span-explainer/internal/store"
 )
 
 const (
 	REGISTER_ENDPOINT     = "/register"
 	UPLOAD_TRACE_ENDPOINT = "/upload-trace"
-	QUERY_LLM_ENDPOINT    = "/query-llm"
+	QUERY_LLM_ENDPOINT    = "/explain-span"
 )
 
 type Server struct {
 	Store *store.Store
 	Llm   llm.LLM
+}
+
+func CORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		// Preflight request
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func RegisterRoutes(mux *http.ServeMux, server *Server, store *store.Store) {
@@ -37,7 +57,11 @@ func RegisterRoutes(mux *http.ServeMux, server *Server, store *store.Store) {
 
 func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 	user := s.Store.RegisterUser()
-
+	sujal := map[string]string{
+		"user_id": user.ID,
+		"token":   user.Token,
+	}
+	fmt.Println(sujal)
 	json.NewEncoder(w).Encode(map[string]string{
 		"user_id": user.ID,
 		"token":   user.Token,
@@ -50,6 +74,11 @@ func (s *Server) uploadTrace(w http.ResponseWriter, r *http.Request) {
 	var raw json.RawMessage
 	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
+	}
+
+	if err := otelvalidator.ValidateOTLPTraces(raw); err != nil {
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -71,11 +100,21 @@ func (s *Server) queryLLM(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
 		TraceID  string `json:"upload_id"`
+		SpanID   string `json:"span_id"`
 		Question string `json:"question"`
 	}
-	// TODO: fail the req if param not present
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
+		http.Error(w, "invalid JSON body", http.StatusBadRequest)
+		return
+	}
+
+	if req.TraceID == "" || req.SpanID == "" || req.Question == "" {
+		http.Error(
+			w,
+			"upload_id, span_id, and question are required",
+			http.StatusBadRequest,
+		)
 		return
 	}
 
@@ -85,17 +124,22 @@ func (s *Server) queryLLM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	answer, err := s.Llm.ExplainTrace(r.Context(), trace.RawJSON, req.Question)
+	answer, err := s.Llm.ExplainTrace(
+		r.Context(),
+		trace.RawJSON,
+		req.Question,
+		req.SpanID,
+	)
 	if err != nil {
-		http.Error(w, "llm error", http.StatusInternalServerError)
+		fmt.Println("ERROR:", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{
+	json.NewEncoder(w).Encode(map[string]*llm.ExplainResult{
 		"answer": answer,
 	})
 }
-
 func Auth(store *store.Store, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
