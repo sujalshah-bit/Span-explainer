@@ -3,29 +3,14 @@ package otelvalidator
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/sujalshah-bit/span-explainer/internal/trace"
 )
 
-type otlpTraces struct {
-	ResourceSpans []resourceSpans `json:"resourceSpans"`
-}
-
-type resourceSpans struct {
-	Resource   json.RawMessage `json:"resource"`
-	ScopeSpans []scopeSpans    `json:"scopeSpans"`
-}
-
-type scopeSpans struct {
-	Spans []span `json:"spans"`
-}
-
-type span struct {
-	TraceID string `json:"traceId"`
-	SpanID  string `json:"spanId"`
-	Name    string `json:"name"`
-}
-
+// ValidateOTLPTraces validates the OTLP trace format using the trace package structs
 func ValidateOTLPTraces(raw json.RawMessage) error {
-	var payload otlpTraces
+	// Use the same trace.Trace struct from trace package
+	var payload trace.Trace
 
 	if err := json.Unmarshal(raw, &payload); err != nil {
 		return ErrInvalidJSON
@@ -57,7 +42,8 @@ func ValidateOTLPTraces(raw json.RawMessage) error {
 	return nil
 }
 
-func isValidSpan(s span) bool {
+// Use trace.Span directly
+func isValidSpan(s trace.Span) bool {
 	return s.TraceID != "" &&
 		s.SpanID != "" &&
 		s.Name != ""
