@@ -20,7 +20,7 @@ func main() {
 
 	server.RegisterRoutes(mux, httpServer, store)
 
-	log.Println("🚀 server running on :8080")
+	log.Println("server running on http://localhost:9000")
 	handler := server.CORS(mux)
-	log.Fatal(http.ListenAndServe(":8080", handler))
+	log.Fatal(http.ListenAndServe(":9000", handler))
 }
