@@ -11,7 +11,10 @@ import (
 
 func main() {
 	store := store.NewStore()
-	llm := &llm.PhiLLM{}
+	llm, err := llm.NewPhiLLM()
+	if err != nil {
+		log.Fatal(err)
+	}
 	httpServer := &server.Server{
 		Store: store,
 		Llm:   llm,

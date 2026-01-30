@@ -8,34 +8,60 @@ import (
 	"strings"
 
 	"github.com/sujalshah-bit/span-explainer/internal/trace"
+	"github.com/sujalshah-bit/span-explainer/internal/util"
+	"github.com/tmc/langchaingo/llms/ollama"
 )
 
 type LLM interface {
 	ExplainTrace(ctx context.Context, traceData json.RawMessage, question, spanID string) (*ExplainResult, error)
 }
 
-type PhiLLM struct{}
+type PhiLLM struct {
+	model *ollama.LLM
+}
+
+func NewPhiLLM() (*PhiLLM, error) {
+	llm, err := ollama.New(
+		ollama.WithModel("phi3:mini"),
+		ollama.WithServerURL("http://192.168.29.62:11434"),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PhiLLM{model: llm}, nil
+}
 
 // ExplainTrace builds a comprehensive context from trace data and prepares it for LLM analysis
-func (f *PhiLLM) ExplainTrace(ctx context.Context, traceData json.RawMessage, question, spanID string) (*ExplainResult, error) {
+func (pllm *PhiLLM) ExplainTrace(ctx context.Context, traceData json.RawMessage, question, spanID string) (*ExplainResult, error) {
 	explainCtx, err := trace.BuildExplainContext(traceData, spanID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build explain context: %w", err)
 	}
 
 	// Construct the prompt for the LLM
-	_ = buildPrompt(explainCtx, question)
+	prompt := buildPrompt(explainCtx, question)
 
-	// TODO: Call actual LLM with the prompt
+	// llmResponse := `{
+	// 	"root_cause": "Database connection timeout in payment-service",
+	// 	"impact": "User checkout failed, transaction rolled back",
+	// 	"suggested_action": "Increase connection pool size and add retry logic"
+	// }`
 
-	llmResponse := `{
-		"root_cause": "Database connection timeout in payment-service",
-		"impact": "User checkout failed, transaction rolled back",
-		"suggested_action": "Increase connection pool size and add retry logic"
-	}`
+	fmt.Println()
+	fmt.Println(prompt)
+	fmt.Println()
+	llmResponse, err := pllm.model.Call(context.Background(), prompt)
+	fmt.Println()
+	fmt.Println(llmResponse)
+	fmt.Println()
+
+	if err != nil {
+		return nil, err
+	}
 
 	// Validate the LLM response format
-	answer, err := ParseResult(llmResponse)
+	answer, err := ParseResult(util.ExtractJSON(llmResponse))
 	if err != nil {
 		return nil, fmt.Errorf("invalid LLM response format: %w", err)
 	}
