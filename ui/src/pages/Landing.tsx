@@ -6,9 +6,7 @@ export default function Landing() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) {
       register().catch(console.error);
-    }
   }, []);
 
   return (

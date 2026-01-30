@@ -16,6 +16,7 @@ export default function ExplainSpan() {
   );
   const [spanId, setSpanId] = useState<string>("");
   const [question, setQuestion] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
   const [answer, setAnswer] = useState<ExplainSpanAnswer | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,7 +37,7 @@ export default function ExplainSpan() {
     console.log("Explain payload:", payload);
 
     try {
-      const res = await explainSpan(payload);
+      const res = await explainSpan(payload,setLoading);
       console.log(res.answer.impact)
       setAnswer(res.answer);
     } catch {
@@ -85,6 +86,12 @@ export default function ExplainSpan() {
       >
         Get Explanation
       </button>
+
+      {loading && (
+        <div>
+           Loading.... 
+        </div>
+      )}
 
       {answer && (
         <div className="mt-6 bg-white shadow rounded-xl p-4">

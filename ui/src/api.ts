@@ -5,7 +5,10 @@ import type{
   ExplainSpanResponse,
 } from "./types";
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = "http://localhost:9000";
+
+const TRACE_STORAGE_KEY = "span_explainer_trace";
+const UPLOAD_ID_STORAGE_KEY = "span_explainer_upload_id";
 
 let token: string | null = localStorage.getItem("token");
 
@@ -15,6 +18,8 @@ export async function register(): Promise<void> {
   token = data.token;
   console.log({token})
   localStorage.setItem("token", token);
+  localStorage.removeItem(TRACE_STORAGE_KEY);
+  localStorage.removeItem(UPLOAD_ID_STORAGE_KEY);
 }
 
 function authHeaders(): HeadersInit {
@@ -41,13 +46,16 @@ export async function uploadTrace(
 }
 
 export async function explainSpan(
-  payload: ExplainSpanRequest
+  payload: ExplainSpanRequest,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>
+
 ): Promise<ExplainSpanResponse> {
+  setLoading(true)
   const res = await fetch(`${BASE_URL}/explain-span`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify(payload),
-  });
+  }).finally(()=>{setLoading(false)});
 
   return res.json();
 }

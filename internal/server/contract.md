@@ -13,7 +13,7 @@ http://<HOST>:<PORT>
 Example (local):
 
 ```
-http://localhost:8080
+http://localhost:9000
 ```
 
 All requests and responses use **JSON**.
@@ -203,3 +203,41 @@ Example:
 | 404    | Trace not found            |
 | 500    | LLM processing error       |
 
+
+
+```bash
+
+
+I have developed the application which explain the error span
+
+I want to test it for that i need test cases whether the llm is explaining correctly different types of error or problem.  
+
+
+
+I want you to create a json file full of test cases each case will have three fields 
+
+
+
+name : string
+
+trace: json (you create otel traces it shouldn't be too long) 
+
+span_id
+
+llm answer: json(format
+
+{
+
+  "root_cause": "string",
+
+  "impact": "impact",
+
+  "suggested_action": ""
+
+}
+
+)
+
+expected answer
+
+```
