@@ -1,0 +1,45 @@
+================================================================================
+LLM ANSWER QUALITY EVALUATION REPORT
+================================================================================
+
+OVERALL PERFORMANCE
+--------------------------------------------------------------------------------
+Average Overall Score: 0.533
+Average Root Cause Score: 0.487
+Average Impact Score: 0.514
+Average Action Score: 0.600
+Average Response Time: 10.53 seconds
+
+PERFORMANCE DISTRIBUTION
+--------------------------------------------------------------------------------
+Excellent (≥0.85): 0 tests (0.0%)
+Good (0.70-0.84): 0 tests (0.0%)
+Acceptable (0.60-0.69): 2 tests (20.0%)
+Needs Improvement (<0.60): 8 tests (80.0%)
+
+TOP 3 PERFORMING TESTS
+--------------------------------------------------------------------------------
+Database Connection Timeout: 0.696
+  - Root Cause: 0.758, Impact: 0.703, Action: 0.626
+Null Pointer Exception in Service Layer: 0.634
+  - Root Cause: 0.742, Impact: 0.587, Action: 0.574
+File System Permission Denied: 0.595
+  - Root Cause: 0.653, Impact: 0.511, Action: 0.620
+
+BOTTOM 3 PERFORMING TESTS
+--------------------------------------------------------------------------------
+Third-Party API Rate Limit Exceeded: 0.384
+  - Root Cause: 0.223, Impact: 0.348, Action: 0.582
+JSON Parsing Error Invalid Format: 0.462
+  - Root Cause: 0.308, Impact: 0.518, Action: 0.560
+Memory Leak in Background Task: 0.467
+  - Root Cause: 0.317, Impact: 0.465, Action: 0.618
+
+KEY INSIGHTS
+--------------------------------------------------------------------------------
+• Strongest Component: Action (0.600)
+• Weakest Component: Root Cause (0.487)
+• Response Time Correlation: 0.054 (weak)
+• Score Consistency: consistent (std: 0.091)
+
+================================================================================
